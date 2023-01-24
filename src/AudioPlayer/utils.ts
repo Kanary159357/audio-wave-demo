@@ -3,7 +3,7 @@ export function getAverageBlockList(
   blockSize: number,
   blockList: Float32Array
 ) {
-  let filteredData = [];
+  const filteredData = [];
   for (let i = 0; i < totalCnt; i++) {
     const blockStart = blockSize * i; // 샘플 구간 시작 포인트
     let blockSum = 0;
