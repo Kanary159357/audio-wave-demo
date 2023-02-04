@@ -13,9 +13,12 @@ export const useCanvas = (
 
     const initiateCanvas = () => {
       const dpr = window.devicePixelRatio ?? 1;
+
       if (!canvas || !ctx) return;
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
+      canvas.width = Math.floor(canvasWidth * dpr);
+      canvas.height = Math.floor(canvasHeight * dpr);
+      canvas.style.width = `${canvasWidth}px`;
+      canvas.style.height = `${canvasHeight}px`;
 
       ctx.scale(dpr, dpr);
     };

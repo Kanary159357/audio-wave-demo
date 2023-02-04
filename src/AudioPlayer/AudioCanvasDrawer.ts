@@ -17,13 +17,33 @@ export class AudioCanvasDrawer {
     this.blockWidth = options.blockWidth ?? 5;
   }
 
+  getPixelRatio() {
+    return window.devicePixelRatio ?? 1;
+  }
+
   getCanvasHeight() {
+    if (this.canvasRef.current?.height) {
+      return this.canvasRef.current.height / this.getPixelRatio();
+    }
+
     return this.canvasRef.current?.height ?? 0;
   }
 
   getCanvasWidth() {
+    if (this.canvasRef.current?.width) {
+      return this.canvasRef.current.width / this.getPixelRatio();
+    }
     return this.canvasRef.current?.width ?? 0;
   }
+
+  clearCanvas() {
+    if (!this.canvasRef || !this.canvasRef.current) return;
+    const ctx = this.canvasRef.current.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, this.getCanvasWidth(), this.getCanvasHeight());
+  }
+
   drawProgressBlocks({
     currentTime,
     duration,

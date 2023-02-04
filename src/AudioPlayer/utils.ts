@@ -29,3 +29,17 @@ export function normalizePeak(arr: number[]) {
   const maxPeak = Math.max(...arr);
   return arr.map((item) => item / maxPeak);
 }
+
+export async function getAudioData({
+  buffer,
+  blockCnt,
+}: {
+  buffer: AudioBuffer;
+  blockCnt: number;
+}) {
+  const rawData = buffer.getChannelData(0);
+  const blockSize = Math.floor(rawData.length / blockCnt);
+  const totalSamples = buffer.duration * blockCnt;
+
+  return getAverageBlockList(totalSamples, blockSize, rawData);
+}

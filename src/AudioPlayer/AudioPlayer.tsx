@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { memo } from "preact/compat";
 
 import {
   getAudioBufferFromResponse,
-  getAverageBlockList,
+  getAudioData,
   normalizePeak,
 } from "./utils";
 import { useCanvas } from "./useCanvas";
@@ -22,9 +22,9 @@ function AudioPlayer({
 }) {
   const drawWaveForm = (ctx: CanvasRenderingContext2D) => {
     if (!audioRef.current || !ctx || !audioData) return;
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    const { duration, currentTime } = audioRef.current;
 
+    const { duration, currentTime } = audioRef.current;
+    canvasDrawer.clearCanvas();
     canvasDrawer.drawBlocks({ blockList: audioData });
     canvasDrawer.drawProgressBlocks({ duration, currentTime });
   };
@@ -37,25 +37,19 @@ function AudioPlayer({
   const canvasDrawer = new AudioCanvasDrawer({
     canvasRef,
     blockList: audioData ?? [],
-    blockWidth,
+    blockWidth: 3,
   });
 
   useEffect(() => {
     (async () => {
       const buffer = await getAudioBufferFromResponse(body);
+      const audioData = await getAudioData({
+        buffer,
+        blockCnt: canvasWidth / blockWidth,
+      });
       setAudioSrc(body);
-      const audioData = await getAudioData(buffer);
       setAudioData(normalizePeak(audioData));
     })();
-
-    async function getAudioData(buffer: AudioBuffer) {
-      const rawData = buffer.getChannelData(0);
-      const blockCnt = canvasWidth / blockWidth;
-      const blockSize = Math.floor(rawData.length / blockCnt);
-      const totalSamples = buffer.duration * blockCnt;
-
-      return getAverageBlockList(totalSamples, blockSize, rawData);
-    }
 
     async function setAudioSrc(response: Response) {
       if (!audioRef.current) return;
@@ -64,21 +58,19 @@ function AudioPlayer({
     }
   }, [body, canvasWidth]);
 
-  const handleClickCanvas = useCallback(
-    (e: MouseEvent) => {
-      if (e.target instanceof HTMLCanvasElement) {
-        if (!audioRef.current) return;
-        const rect = e.target.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const seekTime = Math.max(
-          0,
-          audioRef.current.duration * (x / canvasWidth)
-        );
-        audioRef.current.currentTime = seekTime;
-      }
-    },
-    [canvasWidth]
-  );
+  const handleClickCanvas = (e: MouseEvent) => {
+    if (e.target instanceof HTMLCanvasElement) {
+      if (!audioRef.current) return;
+      const rect = e.target.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      console.log(x / canvasWidth);
+      const seekTime = Math.max(
+        0,
+        audioRef.current.duration * (x / canvasWidth)
+      );
+      audioRef.current.currentTime = seekTime;
+    }
+  };
 
   const playAudio = () => {
     audioRef.current?.play();
@@ -91,18 +83,11 @@ function AudioPlayer({
 
   return (
     <div>
-      {audioData && (
-        <canvas
-          width={canvasWidth}
-          height={canvasHeight}
-          ref={canvasRef}
-          onClick={handleClickCanvas}
-        />
-      )}
+      {audioData && <canvas ref={canvasRef} onClick={handleClickCanvas} />}
 
       <audio ref={audioRef} loop />
       <button onClick={isPlaying ? stopAudio : playAudio}>
-        {isPlaying ? "중지" : "재생"}
+        {isPlaying ? "Pause" : "Play"}
       </button>
     </div>
   );
